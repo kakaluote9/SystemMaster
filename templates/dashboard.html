@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}主界面 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-tachometer-alt me-2"></i>系统概览</h1>
+        <div>
+            <a href="{{ url_for('ip_scan') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> 新建扫描
+            </a>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="number text-primary">{{ task_stats.total }}</div>
+                    <div class="label">扫描任务总数</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="number text-danger">{{ vuln_by_severity.critical + vuln_by_severity.high }}</div>
+                    <div class="label">高危漏洞</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="number text-warning">{{ vuln_by_severity.medium }}</div>
+                    <div class="label">中危漏洞</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="number text-info">{{ vuln_by_severity.low + vuln_by_severity.info }}</div>
+                    <div class="label">低危漏洞</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">漏洞风险分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">漏洞趋势</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Tasks -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">最近扫描任务</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>任务名称</th>
+                                    <th>类型</th>
+                                    <th>目标</th>
+                                    <th>状态</th>
+                                    <th>开始时间</th>
+                                    <th>进度</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in recent_tasks %}
+                                <tr>
+                                    <td>{{ task.name }}</td>
+                                    <td>{{ task.task_type }}</td>
+                                    <td>{{ task.target }}</td>
+                                    <td>
+                                        <span id="task-status-{{ task.id }}" class="badge {% if task.status == 'pending' %}bg-secondary{% elif task.status == 'running' %}bg-primary{% elif task.status == 'completed' %}bg-success{% elif task.status == 'failed' %}bg-danger{% elif task.status == 'stopped' %}bg-warning{% endif %}">
+                                            {{ task.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <div class="progress task-progress" data-task-progress="{{ task.id }}">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('task_details', task_id=task.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> 查看
+                                        </a>
+                                        {% if task.status in ['pending', 'running'] %}
+                                        <button onclick="stopScan({{ task.id }})" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-stop"></i> 停止
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not recent_tasks %}
+                                <tr>
+                                    <td colspan="7" class="text-center">暂无扫描任务</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <a href="{{ url_for('task_list') }}" class="btn btn-outline-primary">
+                            查看全部任务 <i class="fas fa-angle-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create Severity Distribution Chart
+        const severityData = {
+            critical: {{ vuln_by_severity.critical }},
+            high: {{ vuln_by_severity.high }},
+            medium: {{ vuln_by_severity.medium }},
+            low: {{ vuln_by_severity.low }},
+            info: {{ vuln_by_severity.info }}
+        };
+        createSeverityChart('severityChart', severityData);
+        
+        // Create Trend Chart
+        const trendData = {{ vuln_trend|tojson }};
+        createTrendChart('trendChart', trendData);
+    });
+</script>
+{% endblock %}

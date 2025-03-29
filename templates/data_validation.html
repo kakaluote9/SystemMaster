@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}数据验证 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3"><i class="fas fa-check-circle me-2"></i>数据验证</h1>
+            <p class="text-muted">使用零知识证明技术验证数据的完整性、真实性和来源</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">数据验证</h5>
+                </div>
+                <div class="card-body">
+                    <form id="data-validation-form" method="POST" action="{{ url_for('data_validation') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label for="data" class="form-label">{{ form.data.label }}</label>
+                            {{ form.data(class="form-control", id="data", rows="8", placeholder="输入需要验证的数据") }}
+                            {% for error in form.data.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="validation_type" class="form-label">{{ form.validation_type.label }}</label>
+                            {{ form.validation_type(class="form-select", id="validation_type") }}
+                            {% for error in form.validation_type.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">
+                                <strong>完整性验证</strong>: 验证数据是否被篡改<br>
+                                <strong>真实性验证</strong>: 验证数据是否来自可信源<br>
+                                <strong>来源验证</strong>: 验证数据的原始来源
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                    
+                    {% if validation_result %}
+                    <div id="validation-result" class="mt-4">
+                        <h5>验证结果</h5>
+                        <div class="verification-result {{ 'verification-success' if validation_result.is_valid else 'verification-failure' }}">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% if validation_result.is_valid %}
+                                    <i class="fas fa-check-circle fa-3x text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-times-circle fa-3x text-danger"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h5>{{ validation_result.message }}</h5>
+                                    <p class="mb-0">验证类型: {{ form.validation_type.data }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <h6>零知识证明详情</h6>
+                                <div class="mt-2">
+                                    <p><strong>承诺值 (Commitment):</strong> {{ validation_result.proof.commitment }}</p>
+                                    <p><strong>挑战值 (Challenge):</strong> {{ validation_result.proof.challenge }}</p>
+                                    <p><strong>响应值 (Response):</strong> {{ validation_result.proof.response }}</p>
+                                    <p><strong>时间戳:</strong> {{ validation_result.proof.timestamp }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="alert {{ 'alert-success' if validation_result.is_valid else 'alert-danger' }} mt-3">
+                                <p class="mb-0">
+                                    <i class="fas {{ 'fa-info-circle' if validation_result.is_valid else 'fa-exclamation-triangle' }} me-2"></i>
+                                    {% if validation_result.is_valid %}
+                                    验证通过：数据符合验证标准，未被篡改且来源可信。
+                                    {% else %}
+                                    验证失败：数据可能已被篡改或来源不可信。
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">零知识证明说明</h5>
+                </div>
+                <div class="card-body">
+                    <p>零知识证明是一种密码学技术，允许一方（证明者）向另一方（验证者）证明某个陈述是正确的，而无需透露除了该陈述是正确的这一事实之外的任何信息。</p>
+                    
+                    <h6 class="mt-3">主要特点：</h6>
+                    <ul>
+                        <li><strong>零知识性</strong>：验证过程不会泄露任何额外信息</li>
+                        <li><strong>完整性</strong>：能够验证数据未被篡改</li>
+                        <li><strong>隐私保护</strong>：保护敏感数据不被暴露</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">应用场景：</h6>
+                    <ul>
+                        <li>敏感数据验证</li>
+                        <li>身份认证</li>
+                        <li>数据来源验证</li>
+                        <li>区块链隐私交易</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">最近验证记录</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_validations %}
+                    <div class="list-group">
+                        {% for validation in recent_validations %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">{{ validation.validation_type }}</h6>
+                                <small>{{ validation.validation_time.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                            </div>
+                            <p class="mb-1">
+                                <span class="badge {{ 'bg-success' if validation.is_valid else 'bg-danger' }}">
+                                    {{ '验证成功' if validation.is_valid else '验证失败' }}
+                                </span>
+                            </p>
+                            <small>数据哈希: {{ validation.data_hash[:15] }}...</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">暂无验证记录</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if recent_validations %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">验证统计</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <canvas id="validationChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card">
+                                <div class="card-body">
+                                    {% set valid_count = 0 %}
+                                    {% set invalid_count = 0 %}
+                                    {% for validation in recent_validations %}
+                                        {% if validation.is_valid %}
+                                            {% set valid_count = valid_count + 1 %}
+                                        {% else %}
+                                            {% set invalid_count = invalid_count + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <div class="number text-success">{{ valid_count }}</div>
+                                    <div class="label">验证成功</div>
+                                    <hr>
+                                    <div class="number text-danger">{{ invalid_count }}</div>
+                                    <div class="label">验证失败</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initDataValidationForm();
+    
+    {% if recent_validations %}
+    // 统计验证成功和失败的数量
+    let validCount = 0;
+    let invalidCount = 0;
+    
+    {% for validation in recent_validations %}
+        {% if validation.is_valid %}
+            validCount++;
+        {% else %}
+            invalidCount++;
+        {% endif %}
+    {% endfor %}
+    
+    // 创建验证结果统计图
+    createValidationChart('validationChart', validCount, invalidCount);
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}IP扫描 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3"><i class="fas fa-network-wired me-2"></i>IP扫描</h1>
+            <p class="text-muted">扫描指定IP地址或IP范围，发现潜在安全漏洞</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">创建IP扫描任务</h5>
+                </div>
+                <div class="card-body">
+                    <form id="ip-scan-form" method="POST" action="{{ url_for('ip_scan') }}" class="scan-form">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label for="ip_address" class="form-label">{{ form.ip_address.label }}</label>
+                            {{ form.ip_address(class="form-control", id="ip_address", placeholder="输入单个IP地址或CIDR格式的IP范围，例如：192.168.1.1或192.168.1.0/24") }}
+                            {% for error in form.ip_address.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">支持单个IP地址或CIDR格式的IP范围</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="scan_name" class="form-label">{{ form.scan_name.label }}</label>
+                            {{ form.scan_name(class="form-control", id="scan_name", placeholder="为此扫描任务命名") }}
+                            {% for error in form.scan_name.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3 text-center">
+                            <button type="button" id="advanced-options-btn" class="btn btn-outline-secondary">
+                                <i class="fas fa-cog me-1"></i> 高级选项
+                            </button>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">IP扫描说明</h5>
+                </div>
+                <div class="card-body">
+                    <p>IP扫描功能可以帮助您发现指定IP地址或IP范围内的潜在安全漏洞。系统将自动分析目标主机开放的端口、运行的服务以及可能存在的安全风险。</p>
+                    
+                    <h6 class="mt-3">扫描内容：</h6>
+                    <ul>
+                        <li>开放端口检测</li>
+                        <li>操作系统识别</li>
+                        <li>服务版本检测</li>
+                        <li>常见漏洞识别</li>
+                        <li>安全配置检查</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">注意事项：</h6>
+                    <ul>
+                        <li>请确保您拥有对目标IP进行扫描的权限</li>
+                        <li>扫描大范围IP可能需要较长时间</li>
+                        <li>扫描结果仅供参考，可能存在误报或漏报</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initIPScanForm();
+    });
+</script>
+{% endblock %}

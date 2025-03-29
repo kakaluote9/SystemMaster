@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}任务列表 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-tasks me-2"></i>任务列表</h1>
+        <div>
+            <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt me-1"></i> 刷新
+            </button>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="newTaskDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-plus me-1"></i> 新建任务
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="newTaskDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('ip_scan') }}"><i class="fas fa-network-wired me-2"></i> IP扫描</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('web_scan') }}"><i class="fas fa-globe me-2"></i> Web扫描</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('network_scan') }}"><i class="fas fa-project-diagram me-2"></i> 网络扫描</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="taskTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">全部</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="running-tab" data-bs-toggle="tab" data-bs-target="#running" type="button" role="tab" aria-controls="running" aria-selected="false">进行中</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">已完成</button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="taskTabsContent">
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>任务名称</th>
+                                    <th>类型</th>
+                                    <th>目标</th>
+                                    <th>状态</th>
+                                    <th>开始时间</th>
+                                    <th>结束时间</th>
+                                    <th>进度</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks %}
+                                <tr>
+                                    <td>{{ task.name }}</td>
+                                    <td>{{ task.task_type }}</td>
+                                    <td>{{ task.target }}</td>
+                                    <td>
+                                        <span id="task-status-{{ task.id }}" class="badge {% if task.status == 'pending' %}bg-secondary{% elif task.status == 'running' %}bg-primary{% elif task.status == 'completed' %}bg-success{% elif task.status == 'failed' %}bg-danger{% elif task.status == 'stopped' %}bg-warning{% endif %}">
+                                            {{ task.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>{{ task.end_time.strftime('%Y-%m-%d %H:%M:%S') if task.end_time else '-' }}</td>
+                                    <td>
+                                        <div class="progress task-progress" data-task-progress="{{ task.id }}">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ task.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                操作
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ task.id }}">
+                                                <li><a class="dropdown-item" href="{{ url_for('task_details', task_id=task.id) }}"><i class="fas fa-eye me-2"></i> 查看详情</a></li>
+                                                {% if task.status in ['pending', 'running'] %}
+                                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); stopScan({{ task.id }})"><i class="fas fa-stop me-2"></i> 停止任务</a></li>
+                                                {% endif %}
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); deleteScan({{ task.id }})" data-confirm="确定要删除此任务吗？此操作无法撤销。"><i class="fas fa-trash me-2"></i> 删除任务</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not tasks %}
+                                <tr>
+                                    <td colspan="8" class="text-center">暂无任务记录</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="running" role="tabpanel" aria-labelledby="running-tab">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>任务名称</th>
+                                    <th>类型</th>
+                                    <th>目标</th>
+                                    <th>状态</th>
+                                    <th>开始时间</th>
+                                    <th>进度</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks if task.status in ['pending', 'running'] %}
+                                <tr>
+                                    <td>{{ task.name }}</td>
+                                    <td>{{ task.task_type }}</td>
+                                    <td>{{ task.target }}</td>
+                                    <td>
+                                        <span id="task-status-running-{{ task.id }}" class="badge {% if task.status == 'pending' %}bg-secondary{% elif task.status == 'running' %}bg-primary{% endif %}">
+                                            {{ task.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <div class="progress task-progress" data-task-progress="{{ task.id }}">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('task_details', task_id=task.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> 查看
+                                        </a>
+                                        <button onclick="stopScan({{ task.id }})" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-stop"></i> 停止
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center">暂无进行中的任务</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>任务名称</th>
+                                    <th>类型</th>
+                                    <th>目标</th>
+                                    <th>状态</th>
+                                    <th>开始时间</th>
+                                    <th>结束时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks if task.status == 'completed' %}
+                                <tr>
+                                    <td>{{ task.name }}</td>
+                                    <td>{{ task.task_type }}</td>
+                                    <td>{{ task.target }}</td>
+                                    <td>
+                                        <span class="badge bg-success">已完成</span>
+                                    </td>
+                                    <td>{{ task.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>{{ task.end_time.strftime('%Y-%m-%d %H:%M:%S') if task.end_time else '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('task_details', task_id=task.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> 查看
+                                        </a>
+                                        <button onclick="deleteScan({{ task.id }})" class="btn btn-sm btn-danger" data-confirm="确定要删除此任务吗？此操作无法撤销。">
+                                            <i class="fas fa-trash"></i> 删除
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center">暂无已完成的任务</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

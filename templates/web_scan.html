@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Web扫描 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3"><i class="fas fa-globe me-2"></i>Web扫描</h1>
+            <p class="text-muted">扫描Web应用程序，发现潜在的漏洞和安全风险</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">创建Web扫描任务</h5>
+                </div>
+                <div class="card-body">
+                    <form id="web-scan-form" method="POST" action="{{ url_for('web_scan') }}" class="scan-form">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label for="url" class="form-label">{{ form.url.label }}</label>
+                            {{ form.url(class="form-control", id="url", placeholder="输入要扫描的网站URL，例如：https://example.com") }}
+                            {% for error in form.url.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">请输入完整URL，包括http://或https://前缀</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="scan_name" class="form-label">{{ form.scan_name.label }}</label>
+                            {{ form.scan_name(class="form-control", id="scan_name", placeholder="为此扫描任务命名") }}
+                            {% for error in form.scan_name.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="service_type" class="form-label">{{ form.service_type.label }}</label>
+                            {{ form.service_type(class="form-select", id="service_type") }}
+                            {% for error in form.service_type.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Web扫描说明</h5>
+                </div>
+                <div class="card-body">
+                    <p>Web扫描功能可以帮助您发现Web应用程序中的安全漏洞和风险。系统将对目标网站进行全面的安全评估，识别潜在的安全威胁。</p>
+                    
+                    <h6 class="mt-3">扫描内容：</h6>
+                    <ul>
+                        <li>SQL注入漏洞</li>
+                        <li>跨站脚本(XSS)漏洞</li>
+                        <li>跨站请求伪造(CSRF)漏洞</li>
+                        <li>敏感信息泄露</li>
+                        <li>安全配置错误</li>
+                        <li>过时的Web组件</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">注意事项：</h6>
+                    <ul>
+                        <li>请确保您拥有对目标网站进行扫描的权限</li>
+                        <li>扫描复杂的Web应用可能需要较长时间</li>
+                        <li>建议在非高峰时段进行扫描，以减少对目标站点的影响</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initWebScanForm();
+    });
+</script>
+{% endblock %}

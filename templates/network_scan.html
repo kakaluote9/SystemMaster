@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}网络扫描 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3"><i class="fas fa-project-diagram me-2"></i>网络扫描</h1>
+            <p class="text-muted">扫描整个网络环境，发现潜在安全风险和漏洞</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">创建网络扫描任务</h5>
+                </div>
+                <div class="card-body">
+                    <form id="network-scan-form" method="POST" action="{{ url_for('network_scan') }}" class="scan-form">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label for="target" class="form-label">{{ form.target.label }}</label>
+                            {{ form.target(class="form-control", id="target", placeholder="输入要扫描的网络地址，例如：192.168.0.0/24或多个IP用逗号分隔") }}
+                            {% for error in form.target.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">可以是IP范围、CIDR表示法或多个IP（用逗号分隔）</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="scan_name" class="form-label">{{ form.scan_name.label }}</label>
+                            {{ form.scan_name(class="form-control", id="scan_name", placeholder="为此扫描任务命名") }}
+                            {% for error in form.scan_name.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="scan_depth" class="form-label">{{ form.scan_depth.label }}</label>
+                            {{ form.scan_depth(class="form-select", id="scan_depth") }}
+                            {% for error in form.scan_depth.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">
+                                <strong>低</strong>: 基本端口扫描和服务检测<br>
+                                <strong>中</strong>: 添加漏洞扫描和基本安全检查<br>
+                                <strong>高</strong>: 全面深入扫描，包括渗透测试和高级检测
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">网络扫描说明</h5>
+                </div>
+                <div class="card-body">
+                    <p>网络扫描功能可以帮助您评估整个网络环境的安全状况，发现潜在的安全漏洞和风险。系统将对网络中的设备、服务和配置进行全面分析。</p>
+                    
+                    <h6 class="mt-3">扫描内容：</h6>
+                    <ul>
+                        <li>网络拓扑探测</li>
+                        <li>设备发现与识别</li>
+                        <li>开放端口与服务检测</li>
+                        <li>防火墙和网络设备配置检查</li>
+                        <li>常见漏洞识别</li>
+                        <li>网络安全风险评估</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">注意事项：</h6>
+                    <ul>
+                        <li>请确保您拥有对目标网络进行扫描的权限</li>
+                        <li>扫描大型网络可能需要较长时间</li>
+                        <li>建议在非高峰时段进行扫描，以减少对网络性能的影响</li>
+                        <li>扫描深度越高，耗时越长，但结果也更全面</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initNetworkScanForm();
+    });
+</script>
+{% endblock %}

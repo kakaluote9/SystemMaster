@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}运维审计 - 基于零知识证明的数据验证与查询系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3"><i class="fas fa-clipboard-list me-2"></i>运维审计</h1>
+            <p class="text-muted">审计系统运维状况，保障系统安全</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">审计记录</h5>
+                </div>
+                <div class="card-body">
+                    {% if audits %}
+                    <div class="maintenance-audit-list">
+                        {% for audit in audits %}
+                        <div class="maintenance-audit-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5>{{ audit.audit_type }}</h5>
+                                <span class="badge bg-primary">{{ audit.audit_time.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                            </div>
+                            <hr>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">审计目标</p>
+                                    <p class="fw-bold">{{ audit.target }}</p>
+                                </div>
+                                <div class="col-md-8">
+                                    <p class="text-muted mb-1">审计发现</p>
+                                    <p>{{ audit.findings }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <h6>建议</h6>
+                                <p class="mb-0">{{ audit.recommendations }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                        <h5>暂无审计记录</h5>
+                        <p class="text-muted">点击右侧"开始新审计"创建您的第一个审计任务</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">开始新审计</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('new_maintenance_audit') }}">
+                        <div class="mb-3">
+                            <label for="audit_type" class="form-label">审计类型</label>
+                            <select class="form-select" id="audit_type" name="audit_type" required>
+                                <option value="">-- 选择审计类型 --</option>
+                                <option value="系统配置审计">系统配置审计</option>
+                                <option value="安全策略审计">安全策略审计</option>
+                                <option value="访问控制审计">访问控制审计</option>
+                                <option value="日志审计">日志审计</option>
+                                <option value="性能审计">性能审计</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="target" class="form-label">审计目标</label>
+                            <input type="text" class="form-control" id="target" name="target" placeholder="输入审计目标，例如: 服务器IP、主机名、应用名称等" required>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play-circle me-1"></i> 开始审计
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">审计类型说明</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="auditTypeAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    系统配置审计
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#auditTypeAccordion">
+                                <div class="accordion-body">
+                                    检查系统配置是否符合安全标准和最佳实践，包括操作系统配置、中间件配置和应用配置等。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    安全策略审计
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#auditTypeAccordion">
+                                <div class="accordion-body">
+                                    评估系统安全策略的有效性，包括密码策略、防火墙规则、入侵检测和防御措施等。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    访问控制审计
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#auditTypeAccordion">
+                                <div class="accordion-body">
+                                    检查用户权限和访问控制机制，确保符合最小权限原则，避免权限滥用或越权访问。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    日志审计
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#auditTypeAccordion">
+                                <div class="accordion-body">
+                                    分析系统日志和审计日志，发现异常行为、安全事件和潜在威胁。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFive">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                    性能审计
+                                </button>
+                            </h2>
+                            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#auditTypeAccordion">
+                                <div class="accordion-body">
+                                    评估系统性能指标，识别瓶颈和优化机会，提高系统整体运行效率。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
